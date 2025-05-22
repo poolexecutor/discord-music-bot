@@ -18,12 +18,8 @@ ytdl_format_options = {
     "no_warnings": True,
     "default_search": "auto",
     "source_address": "0.0.0.0",
+    "cookiesfile": COOKIES_FILE if COOKIES_FILE else None,
 }
-
-# Add cookies file if specified
-if COOKIES_FILE:
-    ytdl_format_options["cookiefile"] = COOKIES_FILE
-    print(f"Using cookies file: {COOKIES_FILE}")
 
 FFMPEG_BEFORE_OPTIONS = "-nostdin"
 FFMPEG_OPTIONS = "-vn -loglevel quiet"
