@@ -48,7 +48,7 @@ cd docker
 
 # Build and start the container
 echo "Building and starting the Docker container..."
-docker-compose build && docker-compose up -d
+docker-compose up -d --build
 
 # Check if container started successfully
 if [ $? -eq 0 ]; then
@@ -61,8 +61,13 @@ if [ $? -eq 0 ]; then
     echo ""
     echo "The bot should now be running and connected to Discord."
     echo "Use the commands listed in the README.md to interact with the bot."
+
+    # Return to the original directory
+    cd ..
 else
     echo "Error: Failed to start the container. Check the logs for more information."
+    # Return to the original directory even if there was an error
+    cd ..
     exit 1
 fi
 

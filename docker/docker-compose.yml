@@ -8,6 +8,6 @@ services:
     container_name: discord-music-bot
     restart: unless-stopped
     volumes:
-      - ./data:/app/data
+      - ../data:/app/data
     env_file:
       - ../.env
