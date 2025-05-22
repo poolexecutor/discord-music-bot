@@ -33,6 +33,7 @@ Thumbs.db
 .env
 .envrc
 .env.docker
+!.env.sample
 
 priv
 
