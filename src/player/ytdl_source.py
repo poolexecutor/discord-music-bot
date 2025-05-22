@@ -3,6 +3,8 @@ import asyncio
 import discord
 import yt_dlp as youtube_dl
 
+from src.config import COOKIES_FILE
+
 # YouTube DL options
 ytdl_format_options = {
     "format": "bestaudio/best",
@@ -17,6 +19,11 @@ ytdl_format_options = {
     "default_search": "auto",
     "source_address": "0.0.0.0",
 }
+
+# Add cookies file if specified
+if COOKIES_FILE:
+    ytdl_format_options["cookiefile"] = COOKIES_FILE
+    print(f"Using cookies file: {COOKIES_FILE}")
 
 FFMPEG_BEFORE_OPTIONS = "-nostdin"
 FFMPEG_OPTIONS = "-vn -loglevel quiet"

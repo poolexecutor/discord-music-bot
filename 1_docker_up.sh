@@ -23,13 +23,6 @@ if ! command -v docker-compose &> /dev/null; then
     exit 1
 fi
 
-# Create data directory for persistent storage if it doesn't exist
-if [ ! -d "data" ]; then
-    echo "Creating data directory for persistent storage..."
-    mkdir -p data
-    echo "Data directory created."
-fi
-
 # Check if .env file exists
 if [ ! -f ".env" ]; then
     echo "Error: .env file not found. Please create a .env file with your Discord token and YouTube API credentials."

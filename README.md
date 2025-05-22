@@ -13,6 +13,7 @@ A Discord bot that can connect to YouTube, join voice channels, and play music.
 - Join and leave voice channels
 - Play music from YouTube URLs or search terms
 - Connect to your personal YouTube account for personalized search results
+- Support for YouTube cookies to access age-restricted or private videos
 - Queue system for multiple songs
 - Pause, resume, and stop music playback
 - Adjustable volume control
@@ -87,6 +88,25 @@ sudo apt install ffmpeg
    YOUTUBE_CLIENT_SECRET=your_client_secret_here
    YOUTUBE_API_KEY=your_api_key_here
    ```
+
+### 3.5 Set Up YouTube Cookies (Optional, for accessing age-restricted or private videos)
+
+If you need to play age-restricted or private videos, you can provide a cookies file from your YouTube account:
+
+1. Install a browser extension to export cookies:
+   - For Chrome: [Get cookies.txt](https://chrome.google.com/webstore/detail/get-cookiestxt/bgaddhkoddajcdgocldbbfleckgcbcid)
+   - For Firefox: [Cookie Quick Manager](https://addons.mozilla.org/en-US/firefox/addon/cookie-quick-manager/)
+
+2. Log in to your YouTube account in your browser
+
+3. Use the extension to export cookies for youtube.com to a file (e.g., `youtube_cookies.txt`)
+
+4. Edit the `.env` file and add the path to your cookies file:
+   ```
+   YOUTUBE_COOKIES_FILE=/path/to/youtube_cookies.txt
+   ```
+
+5. The bot will automatically use these cookies when accessing YouTube videos
 
 ### 4. Configure the Bot
 
@@ -180,6 +200,7 @@ The bot will automatically restart if it crashes or if the server reboots, unles
    - Direct URL: `!play https://www.youtube.com/watch?v=dQw4w9WgXcQ`
    - Search terms: `!play never gonna give you up`
    - If connected to your YouTube account, searches will use your account's preferences
+   - For age-restricted or private videos, set up a cookies file as described in the "Set Up YouTube Cookies" section
 5. Add more songs to the queue:
    - `!play another song name`
    - The bot will automatically play the next song when the current one finishes
@@ -212,6 +233,11 @@ The bot will automatically restart if it crashes or if the server reboots, unles
     ```bash
     pip install --upgrade yt-dlp
     ```
+- If you're unable to play age-restricted or private videos:
+  - Set up a YouTube cookies file as described in the "Set Up YouTube Cookies" section
+  - Make sure the path in `YOUTUBE_COOKIES_FILE` is correct and the file is accessible
+  - Ensure you're logged into the correct YouTube account when exporting cookies
+  - If the cookies file is not working, try exporting it again after clearing your browser cache
 - If you encounter SSL certificate verification errors (like `SSLCertVerificationError: certificate verify failed`):
   - Add `SSL_VERIFY=False` to your `.env` file (this is already set by default)
   - This will disable SSL verification for both the global SSL context and for discord.py using the built-in ssl=False parameter

@@ -16,6 +16,9 @@ YOUTUBE_CLIENT_SECRET = os.getenv("YOUTUBE_CLIENT_SECRET")
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 SCOPES = ["https://www.googleapis.com/auth/youtube.readonly"]
 
+# YouTube cookies file path (for accessing age-restricted or private videos)
+COOKIES_FILE = os.getenv("YOUTUBE_COOKIES_FILE", None)
+
 # Get token.pickle path from environment variable or use default
 TOKEN_PICKLE_PATH = os.getenv("TOKEN_PICKLE_PATH", "token.pickle")
 
