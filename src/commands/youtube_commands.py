@@ -55,7 +55,7 @@ class YouTubeCommands(commands.Cog):
             await ctx.send("The bot will continue to function using anonymous YouTube access.")
 
 
-def setup(bot):
+async def setup(bot):
     """Add the YouTubeCommands cog to the bot.
 
     Args:
@@ -64,4 +64,4 @@ def setup(bot):
     Returns:
         None
     """
-    bot.add_cog(YouTubeCommands(bot))
+    await bot.add_cog(YouTubeCommands(bot))

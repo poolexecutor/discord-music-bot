@@ -177,7 +177,7 @@ class PlaybackCommands(commands.Cog):
             await ctx.send("The bot is not playing anything at the moment.")
 
 
-def setup(bot):
+async def setup(bot):
     """Add the PlaybackCommands cog to the bot.
 
     Args:
@@ -186,4 +186,4 @@ def setup(bot):
     Returns:
         None
     """
-    bot.add_cog(PlaybackCommands(bot))
+    await bot.add_cog(PlaybackCommands(bot))

@@ -100,7 +100,7 @@ class QueueCommands(commands.Cog):
         await ctx.send(f"Volume set to {volume_percent}%")
 
 
-def setup(bot):
+async def setup(bot):
     """Add the QueueCommands cog to the bot.
 
     Args:
@@ -109,4 +109,4 @@ def setup(bot):
     Returns:
         None
     """
-    bot.add_cog(QueueCommands(bot))
+    await bot.add_cog(QueueCommands(bot))

@@ -48,7 +48,7 @@ cd docker
 
 # Build and start the container
 echo "Building and starting the Docker container..."
-docker-compose up -d
+docker-compose build && docker-compose up -d
 
 # Check if container started successfully
 if [ $? -eq 0 ]; then

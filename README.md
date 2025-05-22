@@ -95,7 +95,8 @@ sudo apt install ffmpeg
    ```bash
    pip install -r requirements.txt
    ```
-3. Edit the `.env` file and replace `your_discord_bot_token_here` with your actual Discord bot token
+3. Edit the `.env` file and add your actual Discord bot token to the `DISCORD_TOKEN=` line
+   - Do not include any quotes around the token
 
 ### 5. Run the Bot
 
@@ -200,7 +201,10 @@ The bot will automatically restart if it crashes or if the server reboots, unles
   - The bot includes improved error handling to address this issue
   - If you still encounter this issue, try restarting the bot
   - In some cases, you may need to manually kill FFmpeg processes on your system
-- If the bot doesn't respond, check that your Discord token is correct in the `.env` file
+- If the bot doesn't respond or you see an error like "Improper token has been passed":
+  - Check that your Discord token is correct in the `.env` file
+  - Make sure you've copied the entire token from the Discord Developer Portal
+  - Verify that the token hasn't been revoked or regenerated in the Discord Developer Portal
 - Make sure the bot has the necessary permissions in your Discord server
 - If you encounter YouTube signature extraction errors (like `Could not find JS function 'decodeURIComponent'`):
   - This bot uses yt-dlp, a more actively maintained fork of youtube-dl, to handle YouTube video extraction

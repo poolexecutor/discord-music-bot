@@ -29,16 +29,19 @@ def main() -> None:
     else:
         bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
 
-    # Load command extensions
-    async def load_extensions() -> None:
-        """Load command extensions for the bot."""
+    # Load command extensions using setup_hook
+    async def setup_hook() -> None:
+        """Initialize the bot with extensions and other setup tasks.
+
+        This method is automatically called by discord.py during bot initialization.
+        """
         await bot.load_extension("src.commands.voice_commands")
         await bot.load_extension("src.commands.playback_commands")
         await bot.load_extension("src.commands.queue_commands")
         await bot.load_extension("src.commands.youtube_commands")
 
-    # Schedule the loading of extensions
-    bot.loop.create_task(load_extensions())
+    # Assign the setup_hook method to the bot
+    bot.setup_hook = setup_hook
 
     # Bot events
     @bot.event

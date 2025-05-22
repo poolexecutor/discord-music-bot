@@ -53,7 +53,7 @@ class VoiceCommands(commands.Cog):
             await ctx.send("The bot is not connected to a voice channel.")
 
 
-def setup(bot):
+async def setup(bot):
     """Add the VoiceCommands cog to the bot.
 
     Args:
@@ -62,4 +62,4 @@ def setup(bot):
     Returns:
         None
     """
-    bot.add_cog(VoiceCommands(bot))
+    await bot.add_cog(VoiceCommands(bot))
