@@ -3,9 +3,10 @@ import asyncio
 import discord
 import yt_dlp as youtube_dl
 
-from src.config import COOKIES_FILE
+from src.config import COOKIES_FILE, VERBOSE_MODE
 
 # YouTube DL options
+
 ytdl_format_options = {
     "format": "bestaudio/best",
     "outtmpl": "%(extractor)s-%(id)s-%(title)s.%(ext)s",
@@ -13,9 +14,10 @@ ytdl_format_options = {
     "noplaylist": True,
     "nocheckcertificate": True,
     "ignoreerrors": False,
-    "logtostderr": False,
-    "quiet": True,
-    "no_warnings": True,
+    "logtostderr": VERBOSE_MODE,  # Log to stderr if verbose mode is enabled
+    "quiet": not VERBOSE_MODE,  # Be quiet if verbose mode is disabled
+    "no_warnings": not VERBOSE_MODE,  # Show warnings if verbose mode is enabled
+    "verbose": VERBOSE_MODE,  # Full verbosity if verbose mode is enabled
     "default_search": "auto",
     "source_address": "0.0.0.0",
     "cookiefile": COOKIES_FILE if COOKIES_FILE else None,

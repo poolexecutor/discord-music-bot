@@ -32,7 +32,19 @@ if [ ! -f ".env" ]; then
     echo "YOUTUBE_CLIENT_SECRET=your_client_secret_here"
     echo "YOUTUBE_API_KEY=your_api_key_here"
     echo "SSL_VERIFY=False"
+    echo "VERBOSE_MODE=False"
+    echo "YOUTUBE_AUTH_ON_STARTUP=False"
     exit 1
+fi
+
+# Create data directory if it doesn't exist
+echo "Checking if data directory exists..."
+if [ ! -d "data" ]; then
+    echo "Creating data directory..."
+    mkdir -p data
+    echo "Data directory created."
+else
+    echo "Data directory already exists."
 fi
 
 # Navigate to the docker directory
