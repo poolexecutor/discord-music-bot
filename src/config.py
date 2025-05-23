@@ -10,6 +10,9 @@ load_dotenv()
 TOKEN: str = os.getenv("DISCORD_TOKEN", "")  # Default to empty string if not set
 COMMAND_PREFIX = "!"
 
+# Logging configuration
+VERBOSE_MODE = os.getenv("VERBOSE_MODE", "False").lower() == "true"
+
 # YouTube API configuration
 YOUTUBE_CLIENT_ID = os.getenv("YOUTUBE_CLIENT_ID")
 YOUTUBE_CLIENT_SECRET = os.getenv("YOUTUBE_CLIENT_SECRET")
@@ -25,6 +28,9 @@ TOKEN_PICKLE_PATH = os.getenv("TOKEN_PICKLE_PATH", "token.pickle")
 # SSL verification setting (set to 'False' to disable SSL verification if you're having certificate issues)
 SSL_VERIFY = os.getenv("SSL_VERIFY", "True").lower() != "false"
 
+# YouTube authentication on startup setting (set to 'True' to enable authentication on startup)
+YOUTUBE_AUTH_ON_STARTUP = os.getenv("YOUTUBE_AUTH_ON_STARTUP", "False").lower() == "true"
+
 
 # Configure SSL verification
 def configure_ssl():
@@ -35,7 +41,6 @@ def configure_ssl():
     in environments with SSL certificate issues, but should be avoided in production.
     """
     if not SSL_VERIFY:
-        print(
-            "Warning: SSL certificate verification is disabled. This is not recommended for production use."
-        )
+        # We don't use logger here because it might not be initialized yet
+        # The actual warning is logged in bot.py after logger initialization
         ssl._create_default_https_context = ssl._create_unverified_context

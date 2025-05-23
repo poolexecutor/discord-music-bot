@@ -4,6 +4,7 @@ import pickle
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from loguru import logger
 
 from src.config import SCOPES, TOKEN_PICKLE_PATH, YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET
 
@@ -52,10 +53,12 @@ async def search_youtube(query, max_results=1):
     """Search YouTube using the authenticated API."""
     if not youtube:
         # If YouTube API authentication failed, return None
+        logger.warning("YouTube API not authenticated, cannot search")
         return None
 
     try:
         # Call the search.list method to retrieve results matching the specified query term
+        logger.debug(f"Searching YouTube for: {query} (max_results={max_results})")
         search_response = (
             youtube.search()
             .list(q=query, part="id,snippet", maxResults=max_results, type="video")
@@ -65,15 +68,20 @@ async def search_youtube(query, max_results=1):
         videos = []
         for search_result in search_response.get("items", []):
             if search_result["id"]["kind"] == "youtube#video":
+                video_id = search_result["id"]["videoId"]
+                title = search_result["snippet"]["title"]
+                url = f"https://www.youtube.com/watch?v={video_id}"
+                logger.debug(f"Found video: {title} ({url})")
                 videos.append(
                     {
-                        "id": search_result["id"]["videoId"],
-                        "title": search_result["snippet"]["title"],
-                        "url": f"https://www.youtube.com/watch?v={search_result['id']['videoId']}",
+                        "id": video_id,
+                        "title": title,
+                        "url": url,
                     }
                 )
 
+        logger.info(f"Found {len(videos)} videos matching query: {query}")
         return videos
     except Exception as e:
-        print(f"Error searching YouTube API: {str(e)}")
+        logger.error(f"Error searching YouTube API: {str(e)}")
         return None

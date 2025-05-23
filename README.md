@@ -18,6 +18,10 @@ A Discord bot that can connect to YouTube, join voice channels, and play music.
 - Pause, resume, and stop music playback
 - Adjustable volume control
 - Simple command interface
+- Comprehensive logging system with loguru
+- Verbose mode for detailed debugging information
+- Optional YouTube authentication on startup (disabled by default)
+- Docker support for easy deployment on any platform including VPS
 
 ## Prerequisites
 
@@ -101,12 +105,23 @@ If you need to play age-restricted or private videos, you can provide a cookies 
 
 3. Use the extension to export cookies for youtube.com to a file (e.g., `youtube_cookies.txt`)
 
-4. Edit the `.env` file and add the path to your cookies file:
+4. Place the cookies file in the `data` directory:
    ```
-   YOUTUBE_COOKIES_FILE=/path/to/youtube_cookies.txt
+   # Create the data directory if it doesn't exist
+   mkdir -p data
+
+   # Move your cookies file to the data directory
+   mv youtube_cookies.txt data/
    ```
 
-5. The bot will automatically use these cookies when accessing YouTube videos
+5. Edit the `.env` file and add the path to your cookies file:
+   ```
+   YOUTUBE_COOKIES_FILE=data/youtube_cookies.txt
+   ```
+
+6. The bot will automatically use these cookies when accessing YouTube videos
+
+When using Docker, the `data` directory is mounted as a volume, so your cookies file will be accessible to the bot inside the container.
 
 ### 4. Configure the Bot
 
@@ -117,6 +132,14 @@ If you need to play age-restricted or private videos, you can provide a cookies 
    ```
 3. Edit the `.env` file and add your actual Discord bot token to the `DISCORD_TOKEN=` line
    - Do not include any quotes around the token
+   - You can also configure additional options:
+     ```
+     # Enable verbose mode for detailed logging (default: False)
+     VERBOSE_MODE=True
+
+     # Enable YouTube authentication on startup (default: False)
+     YOUTUBE_AUTH_ON_STARTUP=False
+     ```
 
 ### 5. Run the Bot
 
@@ -136,15 +159,17 @@ Using Docker is the easiest way to deploy the bot, as it handles all dependencie
 #### 2. Setup
 
 1. Clone this repository
-2. Create a `data` directory for persistent storage:
+2. The `data` directory for persistent storage will be created automatically by the startup script, but you can create it manually if needed:
    ```bash
    mkdir -p data
    ```
 3. Make sure your `.env` file is properly configured with your Discord token and YouTube API credentials
+   - Include any additional configuration options like `VERBOSE_MODE` or `YOUTUBE_AUTH_ON_STARTUP`
+   - If you're using cookies for YouTube, place them in the `data` directory as described in the "Set Up YouTube Cookies" section
 
 #### 3. Build and Run
 
-**Option A: Using the convenience script**
+**Option A: Using the convenience script (recommended)**
 
 ```bash
 # Make the script executable (first time only)
@@ -157,6 +182,9 @@ chmod +x 1_docker_up.sh
 **Option B: Manual commands**
 
 ```bash
+# Create data directory if it doesn't exist
+mkdir -p data
+
 # Navigate to the docker directory
 cd docker
 
@@ -170,7 +198,50 @@ docker-compose logs -f
 docker-compose down
 ```
 
-The bot will automatically restart if it crashes or if the server reboots, unless you explicitly stop it with `docker-compose down`.
+#### 4. VPS Deployment
+
+To deploy the bot on a VPS (Virtual Private Server):
+
+1. Set up a VPS with your preferred provider (AWS, DigitalOcean, Linode, etc.)
+2. Install Docker and Docker Compose on your VPS
+3. Clone this repository to your VPS
+4. Configure your `.env` file with your Discord token and other settings
+5. Run the bot using the convenience script or manual commands as described above
+6. (Optional) Set up a systemd service to start the bot automatically on system boot:
+
+```bash
+# Create a systemd service file
+sudo nano /etc/systemd/system/discord-music-bot.service
+```
+
+Add the following content (adjust paths as needed):
+
+```
+[Unit]
+Description=Discord Music Bot
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/path/to/discord-music-bot
+ExecStart=/path/to/discord-music-bot/1_docker_up.sh
+ExecStop=/usr/bin/docker-compose -f /path/to/discord-music-bot/docker/docker-compose.yml down
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start the service:
+
+```bash
+sudo systemctl enable discord-music-bot
+sudo systemctl start discord-music-bot
+```
+
+The bot will automatically restart if it crashes or if the server reboots, unless you explicitly stop it with `docker-compose down` or `sudo systemctl stop discord-music-bot`.
 
 ## Commands
 
@@ -249,50 +320,12 @@ The bot will automatically restart if it crashes or if the server reboots, unles
   - If authentication fails, try running the `!connect_youtube` command again
   - If you get quota exceeded errors, you may need to wait until your quota resets or request an increase
   - The bot will still work without YouTube API credentials, but will use anonymous YouTube access
-
-## Project Structure
-
-The project is organized into the following directories:
-
-- `src/`: Contains the main bot code
-  - `commands/`: Command handlers for the bot
-  - `player/`: Music player functionality
-  - `utils/`: Utility functions and API clients
-- `docker/`: Docker-related files for containerization
-- `data/`: Persistent data storage (created at runtime)
-- `requirements/`: Contains dependency files
-  - `prod.txt`: Production dependencies
-  - `dev.txt`: Development dependencies
-
-## Development
-
-### Code Quality Tools
-
-This project uses several code quality tools to maintain consistent style and catch potential issues:
-
-1. **Black**: Code formatter that enforces a consistent style
-2. **Ruff**: Fast Python linter that combines multiple linting tools
-3. **MyPy**: Static type checker for Python
-
-These tools are configured in `pyproject.toml` and can be run using the provided script:
-
-```bash
-# Install development dependencies
-pip install -r requirements/dev.txt
-
-# Run all linting tools in check mode (no changes)
-./src/lint.py --check
-
-# Run all linting tools and fix issues where possible
-./src/lint.py --fix
-
-# Install missing linting tools if needed
-./src/lint.py --install
-```
-
-### Type Annotations
-
-The codebase uses type annotations to improve code quality and enable static type checking with MyPy. This helps catch type-related errors before runtime and improves code documentation.
+- For debugging issues:
+  - Enable verbose mode by setting `VERBOSE_MODE=True` in your `.env` file
+  - Check the logs in `data/bot.log` for detailed information
+  - When running in Docker, you can view the logs with `docker-compose logs -f`
+  - The verbose mode will include function names, line numbers, and other debugging information
+  - It will also enable verbose output from yt-dlp for troubleshooting YouTube-related issues
 
 ## License
 
