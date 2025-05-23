@@ -81,7 +81,7 @@ class PlaybackCommands(commands.Cog):
                 if is_playlist:
                     await ctx.send("Detected a playlist. Processing all songs...")
                     # Use the from_playlist method to get all songs from the playlist
-                    players = await YTDLSource.from_playlist(
+                    players, skipped_entries = await YTDLSource.from_playlist(
                         query, loop=self.bot.loop, stream=True, volume=volumes[server_id]
                     )
 
@@ -89,7 +89,22 @@ class PlaybackCommands(commands.Cog):
                     for player in players:
                         queues[server_id].append(player)
 
+                    # Inform about successfully added songs
                     await ctx.send(f"Added {len(players)} songs from playlist to the queue.")
+
+                    # Inform about any skipped videos
+                    if skipped_entries:
+                        skipped_message = "The following videos were skipped due to errors:\n"
+                        # Limit the number of skipped entries to show to avoid message length issues
+                        max_entries_to_show = 5
+                        if len(skipped_entries) > max_entries_to_show:
+                            shown_entries = skipped_entries[:max_entries_to_show]
+                            skipped_message += "\n".join(shown_entries)
+                            skipped_message += f"\n...and {len(skipped_entries) - max_entries_to_show} more."
+                        else:
+                            skipped_message += "\n".join(skipped_entries)
+
+                        await ctx.send(skipped_message)
                 else:
                     # Use the server's volume setting for a single song
                     player = await YTDLSource.from_url(
