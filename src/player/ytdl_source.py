@@ -11,7 +11,7 @@ ytdl_format_options = {
     "format": "bestaudio/best",
     "outtmpl": "%(extractor)s-%(id)s-%(title)s.%(ext)s",
     "restrictfilenames": True,
-    "noplaylist": True,
+    "noplaylist": False,  # Allow playlists
     "nocheckcertificate": True,
     "ignoreerrors": False,
     "logtostderr": VERBOSE_MODE,  # Log to stderr if verbose mode is enabled
@@ -92,3 +92,55 @@ class YTDLSource(discord.PCMVolumeTransformer):
             data=data,
             volume=volume,
         )
+
+    @classmethod
+    async def from_playlist(cls, url, *, loop=None, stream=False, volume=0.5):
+        """Create multiple YTDLSource instances from a playlist URL.
+
+        Args:
+            url: The URL of the YouTube playlist.
+            loop: The event loop to use for downloading.
+            stream: Whether to stream the audio instead of downloading it.
+            volume: The initial volume level (0.0 to 1.0).
+
+        Returns:
+            A list of YTDLSource instances, one for each video in the playlist.
+
+        Raises:
+            Exception: If there's an error extracting information from the URL.
+        """
+        loop = loop or asyncio.get_event_loop()
+
+        try:
+            data = await loop.run_in_executor(
+                None, lambda: ytdl.extract_info(url, download=not stream)
+            )
+        except Exception as e:
+            raise Exception(f"Could not extract info from playlist {url}: {str(e)}")
+
+        if "entries" not in data:
+            # Not a playlist, just return a single source
+            return [await cls.from_url(url, loop=loop, stream=stream, volume=volume)]
+
+        sources = []
+        for entry in data["entries"]:
+            if not entry:
+                continue
+
+            if "url" not in entry and not stream:
+                continue
+
+            filename = entry["url"] if stream else ytdl.prepare_filename(entry)
+            source = cls(
+                discord.FFmpegPCMAudio(
+                    filename, before_options=FFMPEG_BEFORE_OPTIONS, options=FFMPEG_OPTIONS
+                ),
+                data=entry,
+                volume=volume,
+            )
+            sources.append(source)
+
+        if not sources:
+            raise Exception(f"Could not extract any valid entries from playlist {url}")
+
+        return sources

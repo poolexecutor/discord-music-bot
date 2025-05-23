@@ -22,18 +22,19 @@ class PlaybackCommands(commands.Cog):
         """
         self.bot = bot
 
-    @commands.command(name="play", help="To play a song (URL or search term)")
+    @commands.command(name="play", help="To play a song or playlist (URL or search term)")
     async def play(self, ctx, *, query):
-        """Play a song from a YouTube URL or search term.
+        """Play a song or playlist from a YouTube URL or search term.
 
         This command will:
         1. Search for the song if a search term is provided
-        2. Add the song to the server's queue
+        2. Add the song(s) to the server's queue
         3. Start playing if nothing is currently playing
+        4. If a playlist URL is provided, add all songs from the playlist to the queue
 
         Args:
             ctx: The command context.
-            query: The YouTube URL or search term.
+            query: The YouTube URL (video or playlist) or search term.
 
         Returns:
             None
@@ -74,19 +75,35 @@ class PlaybackCommands(commands.Cog):
                         )
                         query = f"ytsearch:{query}"
 
-                # Use the server's volume setting
-                player = await YTDLSource.from_url(
-                    query, loop=self.bot.loop, stream=True, volume=volumes[server_id]
-                )
+                # Check if the URL is a playlist
+                is_playlist = "playlist" in query or "list=" in query
 
-                # Add the song to the queue
-                queues[server_id].append(player)
+                if is_playlist:
+                    await ctx.send("Detected a playlist. Processing all songs...")
+                    # Use the from_playlist method to get all songs from the playlist
+                    players = await YTDLSource.from_playlist(
+                        query, loop=self.bot.loop, stream=True, volume=volumes[server_id]
+                    )
+
+                    # Add all songs to the queue
+                    for player in players:
+                        queues[server_id].append(player)
+
+                    await ctx.send(f"Added {len(players)} songs from playlist to the queue.")
+                else:
+                    # Use the server's volume setting for a single song
+                    player = await YTDLSource.from_url(
+                        query, loop=self.bot.loop, stream=True, volume=volumes[server_id]
+                    )
+
+                    # Add the song to the queue
+                    queues[server_id].append(player)
+
+                    await ctx.send(f"Added to queue: {player.title}")
 
                 # If nothing is currently playing, start playing
                 if not voice_channel.is_playing() and not voice_channel.is_paused():
                     await play_next(ctx, self.bot)
-                else:
-                    await ctx.send(f"Added to queue: {player.title}")
 
         except Exception as e:
             await ctx.send(f"An error occurred: {str(e)}")
