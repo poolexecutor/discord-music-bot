@@ -6,6 +6,7 @@ import yt_dlp as youtube_dl
 from src.config import COOKIES_FILE
 
 # YouTube DL options
+
 ytdl_format_options = {
     "format": "bestaudio/best",
     "outtmpl": "%(extractor)s-%(id)s-%(title)s.%(ext)s",
@@ -13,9 +14,10 @@ ytdl_format_options = {
     "noplaylist": True,
     "nocheckcertificate": True,
     "ignoreerrors": False,
-    "logtostderr": False,
-    "quiet": True,
-    "no_warnings": True,
+    "logtostderr": True,  # Changed from False to True
+    "quiet": False,  # Changed from True to False
+    "no_warnings": False,  # Changed from True to False
+    "verbose": True,  # Added this line for full verbosity
     "default_search": "auto",
     "source_address": "0.0.0.0",
     "cookiefile": COOKIES_FILE if COOKIES_FILE else None,
