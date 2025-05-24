@@ -12,6 +12,7 @@ A Discord bot that can connect to YouTube, join voice channels, and play music.
 
 - Join and leave voice channels
 - Play music from YouTube URLs or search terms
+- Support for YouTube playlists - add entire playlists to the queue
 - Connect to your personal YouTube account for personalized search results
 - Support for YouTube cookies to access age-restricted or private videos
 - Queue system for multiple songs
@@ -247,7 +248,7 @@ The bot will automatically restart if it crashes or if the server reboots, unles
 
 - `!join` - Bot joins your current voice channel
 - `!leave` - Bot leaves the voice channel
-- `!play [youtube_url or search terms]` - Plays audio from YouTube URL or searches for the terms
+- `!play [youtube_url or search terms]` - Plays audio from YouTube URL (video or playlist) or searches for the terms
 - `!pause` - Pauses the currently playing audio
 - `!resume` - Resumes paused audio
 - `!stop` - Stops playing audio
@@ -269,11 +270,13 @@ The bot will automatically restart if it crashes or if the server reboots, unles
    - The bot will confirm when you're successfully connected
 4. Play music using one of these methods:
    - Direct URL: `!play https://www.youtube.com/watch?v=dQw4w9WgXcQ`
+   - Playlist URL: `!play https://www.youtube.com/playlist?list=PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI`
    - Search terms: `!play never gonna give you up`
    - If connected to your YouTube account, searches will use your account's preferences
    - For age-restricted or private videos, set up a cookies file as described in the "Set Up YouTube Cookies" section
 5. Add more songs to the queue:
    - `!play another song name`
+   - `!play https://www.youtube.com/playlist?list=YOUR_PLAYLIST_ID` to add an entire playlist
    - The bot will automatically play the next song when the current one finishes
 6. Manage your queue:
    - `!queue` to see what songs are in the queue
