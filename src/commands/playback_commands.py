@@ -4,6 +4,7 @@ from collections import deque
 from discord.ext import commands
 from loguru import logger
 
+from src.config import DEFAULT_VOLUME
 from src.player.queue_manager import play_next, queues, volumes
 from src.player.ytdl_source import YTDLSource
 from src.utils.youtube_api import search_youtube
@@ -63,7 +64,7 @@ class PlaybackCommands(commands.Cog):
             # Initialize volume for this server if it doesn't exist
             if server_id not in volumes:
                 logger.debug(f"Initializing volume for server {server.name}")
-                volumes[server_id] = 0.5  # Default to 50%
+                volumes[server_id] = DEFAULT_VOLUME  # Default to 50%
 
             async with ctx.typing():
                 # Check if the query is a URL or a search term
