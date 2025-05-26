@@ -5,7 +5,7 @@ from loguru import logger
 # Music queue for each server
 queues: dict[int, deque] = {}
 
-# Volume levels for each server (default: 50%)
+# Volume levels for each server (default: 10%)
 volumes: dict[int, float] = {}
 
 
@@ -64,6 +64,9 @@ def handle_playback_completion(ctx, error, bot):
 
     if error:
         logger.error(f"Player error in server {server_id}: {error}")
+
+    # Add a small delay to ensure proper cleanup
+    asyncio.run_coroutine_threadsafe(asyncio.sleep(1), bot.loop)
 
     # Use run_coroutine_threadsafe to call play_next in the bot's event loop
     logger.debug(f"Song finished, attempting to play next song in server {server_id}")

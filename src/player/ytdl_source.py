@@ -12,7 +12,7 @@ MUSIC_YOUTUBE_PATTERN = r"music\.youtube\.com"
 YOUTUBE_REPLACEMENT = "youtube.com"
 
 # FFmpeg configuration
-FFMPEG_BEFORE_OPTIONS = "-nostdin"
+FFMPEG_BEFORE_OPTIONS = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
 FFMPEG_OPTIONS = "-vn -loglevel quiet"
 
 # YouTube DL options
@@ -30,6 +30,7 @@ ytdl_format_options: Dict[str, Any] = {
     "default_search": "auto",
     "source_address": "0.0.0.0",
     "cookiefile": COOKIES_FILE if COOKIES_FILE else None,
+    "http_chunk_size": 10485760,  # 10MB chunking for better streaming
 }
 
 # Initialize YouTube DL with our options
