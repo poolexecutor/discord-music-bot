@@ -6,7 +6,6 @@ from src.config import (
     COMMAND_PREFIX,
     SSL_VERIFY,
     TOKEN,
-    VERBOSE_MODE,
     YOUTUBE_AUTH_ON_STARTUP,
     configure_ssl,
 )
@@ -38,7 +37,9 @@ def main() -> None:
     # Configure SSL verification for discord.py
     if not SSL_VERIFY:
         # Use ssl=False parameter to disable SSL verification
-        logger.warning("SSL certificate verification is disabled. This is not recommended for production use.")
+        logger.warning(
+            "SSL certificate verification is disabled. This is not recommended for production use."
+        )
         bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents, ssl=False)
     else:
         bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
@@ -81,7 +82,9 @@ def main() -> None:
                 logger.info("Bot will continue to function using yt-dlp for anonymous access.")
         else:
             logger.info("YouTube authentication on startup is disabled")
-            logger.info("Use the !connect_youtube command to authenticate with YouTube API when needed")
+            logger.info(
+                "Use the !connect_youtube command to authenticate with YouTube API when needed"
+            )
 
     # Run the bot
     bot.run(TOKEN)
