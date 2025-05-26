@@ -1,5 +1,6 @@
 from discord.ext import commands
 
+from src.config import DEFAULT_VOLUME
 from src.player.queue_manager import queues, volumes
 
 
@@ -74,7 +75,7 @@ class QueueCommands(commands.Cog):
 
         # Initialize volume for this server if it doesn't exist
         if server_id not in volumes:
-            volumes[server_id] = 0.5  # Default to 50%
+            volumes[server_id] = DEFAULT_VOLUME  # Default to 50%
 
         # If no volume specified, show current volume
         if volume_percent is None:
