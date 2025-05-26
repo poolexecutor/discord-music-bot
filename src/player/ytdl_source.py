@@ -51,20 +51,6 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
     @classmethod
     async def from_url(cls, url, *, loop=None, stream=False, volume=0.5):
-        """Create a YTDLSource from a URL.
-
-        Args:
-            url: The URL of the YouTube video or a search query.
-            loop: The event loop to use for downloading.
-            stream: Whether to stream the audio instead of downloading it.
-            volume: The initial volume level (0.0 to 1.0).
-
-        Returns:
-            A YTDLSource instance.
-
-        Raises:
-            Exception: If there's an error extracting information from the URL.
-        """
         loop = loop or asyncio.get_event_loop()
 
         try:
@@ -74,15 +60,17 @@ class YTDLSource(discord.PCMVolumeTransformer):
         except Exception as e:
             raise Exception(f"Could not extract info from {url}: {str(e)}")
 
+        if not data:
+            raise Exception(f"No data returned for {url}. The video might be unavailable.")
+
         if "entries" in data:
             # Take first item from a playlist
             data = data["entries"][0]
+            if not data:
+                raise Exception(f"No valid entries found in playlist at {url}")
 
-        if not data:
-            raise Exception(f"Could not retrieve any data from {url}")
-
-        if "url" not in data and not stream:
-            raise Exception(f"No URL found in extracted data from {url}")
+        if "url" not in data:
+            raise Exception(f"No playable URL found for {url}. The video might be unavailable.")
 
         filename = data["url"] if stream else ytdl.prepare_filename(data)
         return cls(

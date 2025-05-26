@@ -132,15 +132,20 @@ class PlaybackCommands(commands.Cog):
                     # Use the server's volume setting for a single song
                     logger.info(f"Processing single song: {query}")
                     logger.debug(f"Using volume: {volumes[server_id]}")
-                    player = await YTDLSource.from_url(
-                        query, loop=self.bot.loop, stream=True, volume=volumes[server_id]
-                    )
+                    # Replace this section in your play command
+                    try:
+                        player = await YTDLSource.from_url(
+                            query, loop=self.bot.loop, stream=True, volume=volumes[server_id]
+                        )
 
-                    # Add the song to the queue
-                    queues[server_id].append(player)
-                    logger.info(f"Added to queue: {player.title}")
-
-                    await ctx.send(f"Added to queue: {player.title}")
+                        # Add the song to the queue only if we successfully got a player
+                        queues[server_id].append(player)
+                        logger.info(f"Added to queue: {player.title}")
+                        await ctx.send(f"Added to queue: {player.title}")
+                    except Exception as e:
+                        logger.error(f"Error adding song to queue: {str(e)}")
+                        await ctx.send(f"Could not add song to queue: {str(e)}")
+                        return
 
                 # If nothing is currently playing, start playing
                 if not voice_channel.is_playing() and not voice_channel.is_paused():
