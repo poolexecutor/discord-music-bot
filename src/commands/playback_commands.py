@@ -100,18 +100,22 @@ class PlaybackCommands(commands.Cog):
                     await ctx.send("Detected a playlist. Processing all songs...")
                     # Use the from_playlist method to get all songs from the playlist
                     logger.debug("Fetching playlist items")
-                    players, skipped_entries = await YTDLSource.from_playlist(
-                        query, loop=self.bot.loop, stream=True, volume=volumes[server_id]
+                    song_infos, skipped_entries = await YTDLSource.from_playlist(
+                        query,
+                        loop=self.bot.loop,
+                        stream=True,
+                        volume=volumes[server_id],
+                        create_source=False,
                     )
 
                     # Add all songs to the queue
-                    logger.info(f"Adding {len(players)} songs from playlist to queue")
-                    for player in players:
-                        queues[server_id].append(player)
-                        logger.debug(f"Added to queue: {player.title}")
+                    logger.info(f"Adding {len(song_infos)} songs from playlist to queue")
+                    for song_info in song_infos:
+                        queues[server_id].append(song_info)
+                        logger.debug(f"Added to queue: {song_info.title}")
 
                     # Inform about successfully added songs
-                    await ctx.send(f"Added {len(players)} songs from playlist to the queue.")
+                    await ctx.send(f"Added {len(song_infos)} songs from playlist to the queue.")
 
                     # Inform about any skipped videos
                     if skipped_entries:
@@ -133,16 +137,20 @@ class PlaybackCommands(commands.Cog):
                     # Use the server's volume setting for a single song
                     logger.info(f"Processing single song: {query}")
                     logger.debug(f"Using volume: {volumes[server_id]}")
-                    # Replace this section in your play command
                     try:
-                        player = await YTDLSource.from_url(
-                            query, loop=self.bot.loop, stream=True, volume=volumes[server_id]
+                        # Get song info without creating the source yet
+                        song_info = await YTDLSource.from_url(
+                            query,
+                            loop=self.bot.loop,
+                            stream=True,
+                            volume=volumes[server_id],
+                            create_source=False,
                         )
 
-                        # Add the song to the queue only if we successfully got a player
-                        queues[server_id].append(player)
-                        logger.info(f"Added to queue: {player.title}")
-                        await ctx.send(f"Added to queue: {player.title}")
+                        # Add the song info to the queue
+                        queues[server_id].append(song_info)
+                        logger.info(f"Added to queue: {song_info.title}")
+                        await ctx.send(f"Added to queue: {song_info.title}")
                     except Exception as e:
                         logger.error(f"Error adding song to queue: {str(e)}")
                         await ctx.send(f"Could not add song to queue: {str(e)}")

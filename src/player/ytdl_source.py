@@ -1,6 +1,6 @@
 import asyncio
 import re
-from typing import List, Optional, Tuple, Dict, Any
+from typing import List, Optional, Tuple, Dict, Any, Union
 
 import discord
 import yt_dlp as youtube_dl
@@ -52,6 +52,68 @@ def convert_music_youtube_url(url: str) -> str:
     return url
 
 
+class SongInfo:
+    """
+    A class to store metadata about a song without creating the actual source.
+
+    This class is used to store information in the queue until the song is ready to be played,
+    at which point a YTDLSource will be created from this metadata.
+    """
+
+    def __init__(self, data: Dict[str, Any], volume: float = 0.5, stream: bool = True):
+        """
+        Initialize a SongInfo instance.
+
+        Args:
+            data: The data dictionary from youtube-dl.
+            volume: The volume level to use when creating a source.
+            stream: Whether to stream the audio instead of downloading it.
+        """
+        self.data = data
+        self.title = data.get("title", "Unknown title")
+        self.url = data.get("webpage_url", data.get("url", ""))
+        self.volume = volume
+        self.stream = stream
+
+    async def create_source(self, loop: Optional[asyncio.AbstractEventLoop] = None) -> "YTDLSource":
+        """
+        Create a YTDLSource from this SongInfo.
+
+        Args:
+            loop: The event loop to use for downloading.
+
+        Returns:
+            A YTDLSource instance.
+        """
+        # Get or create an event loop
+        loop = loop or asyncio.get_event_loop()
+
+        try:
+            # If we're streaming, we need to get the direct audio URL
+            if self.stream and "url" not in self.data:
+                # Extract info using yt-dlp in a non-blocking way
+                data = await loop.run_in_executor(
+                    None, lambda: ytdl.extract_info(self.url, download=False)
+                )
+                if not data:
+                    raise Exception(f"No data returned for {self.url}. The video might be unavailable.")
+                self.data = data
+
+            # Get the filename or URL for the audio
+            filename = self.data["url"] if self.stream else ytdl.prepare_filename(self.data)
+
+            # Create and return a new YTDLSource instance
+            return YTDLSource(
+                discord.FFmpegPCMAudio(
+                    filename, before_options=FFMPEG_BEFORE_OPTIONS, options=FFMPEG_OPTIONS
+                ),
+                data=self.data,
+                volume=self.volume,
+            )
+        except Exception as e:
+            raise Exception(f"Could not create source from {self.url}: {str(e)}") from e
+
+
 class YTDLSource(discord.PCMVolumeTransformer):
     """
     A source for playing audio from YouTube.
@@ -82,18 +144,20 @@ class YTDLSource(discord.PCMVolumeTransformer):
         loop: Optional[asyncio.AbstractEventLoop] = None,
         stream: bool = False,
         volume: float = 0.5,
-    ) -> "YTDLSource":
+        create_source: bool = False,
+    ) -> Union["YTDLSource", "SongInfo"]:
         """
-        Create a YTDLSource from a URL.
+        Create a SongInfo or YTDLSource from a URL.
 
         Args:
             url: The URL of the YouTube video.
             loop: The event loop to use for downloading.
             stream: Whether to stream the audio instead of downloading it.
             volume: The initial volume level (0.0 to 1.0).
+            create_source: Whether to create a YTDLSource immediately (True) or return a SongInfo (False).
 
         Returns:
-            A YTDLSource instance.
+            A SongInfo instance if create_source is False, otherwise a YTDLSource instance.
 
         Raises:
             Exception: If there's an error extracting information from the URL or
@@ -122,20 +186,15 @@ class YTDLSource(discord.PCMVolumeTransformer):
             if not data:
                 raise Exception(f"No valid entries found in playlist at {url}")
 
-        if "url" not in data:
-            raise Exception(f"No playable URL found for {url}. The video might be unavailable.")
+        # Create a SongInfo instance
+        song_info = SongInfo(data, volume=volume, stream=stream)
 
-        # Get the filename or URL for the audio
-        filename = data["url"] if stream else ytdl.prepare_filename(data)
+        # If create_source is True, create and return a YTDLSource immediately
+        if create_source:
+            return await song_info.create_source(loop=loop)
 
-        # Create and return a new YTDLSource instance
-        return cls(
-            discord.FFmpegPCMAudio(
-                filename, before_options=FFMPEG_BEFORE_OPTIONS, options=FFMPEG_OPTIONS
-            ),
-            data=data,
-            volume=volume,
-        )
+        # Otherwise, return the SongInfo
+        return song_info
 
     @classmethod
     async def from_playlist(
@@ -145,19 +204,21 @@ class YTDLSource(discord.PCMVolumeTransformer):
         loop: Optional[asyncio.AbstractEventLoop] = None,
         stream: bool = False,
         volume: float = 0.5,
-    ) -> Tuple[List["YTDLSource"], List[str]]:
+        create_source: bool = False,
+    ) -> Tuple[List[Union["YTDLSource", "SongInfo"]], List[str]]:
         """
-        Create multiple YTDLSource instances from a playlist URL.
+        Create multiple SongInfo or YTDLSource instances from a playlist URL.
 
         Args:
             url: The URL of the YouTube playlist.
             loop: The event loop to use for downloading.
             stream: Whether to stream the audio instead of downloading it.
             volume: The initial volume level (0.0 to 1.0).
+            create_source: Whether to create YTDLSource instances immediately (True) or return SongInfo instances (False).
 
         Returns:
             A tuple containing:
-            - A list of YTDLSource instances, one for each valid video in the playlist.
+            - A list of SongInfo instances (or YTDLSource if create_source is True), one for each valid video in the playlist.
             - A list of error messages for videos that couldn't be processed.
 
         Raises:
@@ -181,12 +242,12 @@ class YTDLSource(discord.PCMVolumeTransformer):
         if "entries" not in data:
             # Not a playlist, just return a single source
             try:
-                source = await cls.from_url(url, loop=loop, stream=stream, volume=volume)
+                source = await cls.from_url(url, loop=loop, stream=stream, volume=volume, create_source=create_source)
                 return [source], []
             except Exception as e:
                 raise Exception(f"Could not extract info from {url}: {str(e)}") from e
 
-        sources: List[YTDLSource] = []
+        sources = []
         skipped_entries: List[str] = []
 
         # Process each entry in the playlist
@@ -195,24 +256,19 @@ class YTDLSource(discord.PCMVolumeTransformer):
                 continue
 
             try:
-                if "url" not in entry and not stream:
-                    continue
-
                 # Get video title or ID for error reporting
                 video_title = entry.get("title", entry.get("id", "Unknown video"))
 
-                # Get the filename or URL for the audio
-                filename = entry["url"] if stream else ytdl.prepare_filename(entry)
+                # Create a SongInfo instance
+                song_info = SongInfo(entry, volume=volume, stream=stream)
 
-                # Create a new YTDLSource instance
-                source = cls(
-                    discord.FFmpegPCMAudio(
-                        filename, before_options=FFMPEG_BEFORE_OPTIONS, options=FFMPEG_OPTIONS
-                    ),
-                    data=entry,
-                    volume=volume,
-                )
-                sources.append(source)
+                # If create_source is True, create a YTDLSource immediately
+                if create_source:
+                    source = await song_info.create_source(loop=loop)
+                    sources.append(source)
+                else:
+                    sources.append(song_info)
+
             except Exception as e:
                 # Skip this entry but record the error
                 error_message = f"Skipped '{video_title}': {str(e)}"

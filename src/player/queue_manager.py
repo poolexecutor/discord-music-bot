@@ -14,8 +14,9 @@ async def play_next(ctx, bot):
 
     This function:
     1. Gets the next song from the server's queue
-    2. Plays it using the voice client
-    3. Sets up a callback for when the song finishes
+    2. Creates a YTDLSource from SongInfo if needed
+    3. Plays it using the voice client
+    4. Sets up a callback for when the song finishes
 
     Args:
         ctx: The command context.
@@ -32,6 +33,22 @@ async def play_next(ctx, bot):
         if voice_client and voice_client.is_connected():
             # Get the next song from the queue
             next_song = queues[server_id].popleft()
+
+            # Check if next_song is a SongInfo object and create a source if needed
+            from src.player.ytdl_source import SongInfo
+            if isinstance(next_song, SongInfo):
+                logger.debug(f"Creating source for song: {next_song.title}")
+                try:
+                    # Create the source only when we're about to play it
+                    next_song = await next_song.create_source(loop=bot.loop)
+                    logger.debug(f"Successfully created source for: {next_song.title}")
+                except Exception as e:
+                    logger.error(f"Error creating source: {str(e)}")
+                    await ctx.send(f"Error playing {next_song.title}: {str(e)}")
+                    # Try to play the next song instead
+                    await play_next(ctx, bot)
+                    return
+
             logger.info(f"Playing next song: {next_song.title} in server {server_id}")
 
             # Play the next song
