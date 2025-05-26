@@ -105,7 +105,6 @@ class PlaybackCommands(commands.Cog):
                         loop=self.bot.loop,
                         stream=True,
                         volume=volumes[server_id],
-                        create_source=False,
                     )
 
                     # Add all songs to the queue
@@ -144,7 +143,6 @@ class PlaybackCommands(commands.Cog):
                             loop=self.bot.loop,
                             stream=True,
                             volume=volumes[server_id],
-                            create_source=False,
                         )
 
                         # Add the song info to the queue
