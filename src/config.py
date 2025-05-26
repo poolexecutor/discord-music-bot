@@ -9,7 +9,7 @@ load_dotenv()
 # Bot configuration
 TOKEN: str = os.getenv("DISCORD_TOKEN", "")  # Default to empty string if not set
 COMMAND_PREFIX = "!"
-DEFAULT_VOLUME = 0.1
+DEFAULT_VOLUME = 0.05
 
 # Logging configuration
 VERBOSE_MODE = os.getenv("VERBOSE_MODE", "False").lower() == "true"

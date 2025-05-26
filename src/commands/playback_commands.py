@@ -121,7 +121,7 @@ class PlaybackCommands(commands.Cog):
                         logger.warning(f"{len(skipped_entries)} videos were skipped due to errors")
                         skipped_message = "The following videos were skipped due to errors:\n"
                         # Limit the number of skipped entries to show to avoid message length issues
-                        max_entries_to_show = 5
+                        max_entries_to_show = 1
                         if len(skipped_entries) > max_entries_to_show:
                             shown_entries = skipped_entries[:max_entries_to_show]
                             skipped_message += "\n".join(shown_entries)
