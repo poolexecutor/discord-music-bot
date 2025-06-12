@@ -161,6 +161,7 @@ class PlaybackCommands(commands.Cog):
 
         except Exception as e:
             logger.error(f"Error in play command: {str(e)}", exc_info=True)
+            logger.exception(e)
             await ctx.send(f"An error occurred: {str(e)}")
 
     @commands.command(name="pause", help="This command pauses the song")
