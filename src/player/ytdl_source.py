@@ -21,8 +21,10 @@ FFMPEG_BEFORE_OPTIONS = (
 FFMPEG_OPTIONS = "-vn -loglevel warning -bufsize 64k"
 
 # Default YouTube-DL options
+
+# Default YouTube-DL options
 DEFAULT_YTDL_OPTIONS: Dict[str, Any] = {
-    "format": "bestaudio/best",
+    "format": "bestaudio*",  # More flexible format selection
     "outtmpl": "%(extractor)s-%(id)s-%(title)s.%(ext)s",
     "restrictfilenames": True,
     "nocheckcertificate": True,
@@ -40,6 +42,12 @@ DEFAULT_YTDL_OPTIONS: Dict[str, Any] = {
     "quiet": not VERBOSE_MODE,
     "no_warnings": not VERBOSE_MODE,
     "verbose": VERBOSE_MODE,
+    "extractor_args": {
+        "youtube": {
+            "player_client": ["android", "web"],  # Use multiple clients as fallback
+            "player_skip": ["webpage", "configs"],  # Skip problematic extraction methods
+        }
+    },
 }
 
 # Global YouTube-DL instance
@@ -89,6 +97,7 @@ class SongInfo:
                 "extract_flat": not self.stream,
                 "noplaylist": True,
                 "skip_download": self.stream,
+                "format": "bestaudio*/best",  # More flexible format selection
             }
         )
         temp_ytdl = youtube_dl.YoutubeDL(extraction_options)
@@ -108,6 +117,9 @@ class SongInfo:
             logger.info(f"Successfully extracted info: {self.title}")
             return self.data
 
+        except youtube_dl.utils.ExtractorError as exc:
+            logger.error(f"Extractor error for {self.url}: {exc}")
+            raise ValueError(f"Failed to extract video: {exc}")
         except Exception as exc:
             logger.error(f"Failed to extract info for {self.url}: {exc}")
             raise
@@ -118,9 +130,27 @@ class SongInfo:
         """
         loop = loop or asyncio.get_event_loop()
 
-        # Re-extract information if needed (e.g., streaming URL expired)
-        if not self.data or (self.stream and "url" not in self.data):
-            self.data = await self.extract_info(loop=loop)
+        # Re-extract information with full details for streaming
+        if self.stream:
+            stream_options = DEFAULT_YTDL_OPTIONS.copy()
+            stream_options.update(
+                {
+                    "extract_flat": False,
+                    "skip_download": True,
+                    "noplaylist": True,
+                    "format": "bestaudio*/best",
+                }
+            )
+            temp_ytdl = youtube_dl.YoutubeDL(stream_options)
+
+            try:
+                logger.debug(f"Re-extracting full info for streaming: {self.url}")
+                self.data = await loop.run_in_executor(
+                    None, lambda: temp_ytdl.extract_info(self.url, download=False)
+                )
+            except Exception as exc:
+                logger.error(f"Failed to extract streaming URL for {self.url}: {exc}")
+                raise ValueError(f"Cannot get streaming URL: {exc}")
 
         # Ensure a valid streaming URL or local filename is available
         filename = self.data.get("url") if self.stream else ytdl.prepare_filename(self.data)
@@ -188,6 +218,11 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
             return song_info
 
+        except youtube_dl.utils.ExtractorError as exc:
+            logger.error(f"YouTube extractor error for {url}: {exc}")
+            raise ValueError(
+                f"Failed to extract video. It may be unavailable or region-locked: {exc}"
+            )
         except Exception as exc:
             logger.error(f"Error processing {url}: {exc}")
             raise
